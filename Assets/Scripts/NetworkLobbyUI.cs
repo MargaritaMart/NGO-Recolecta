@@ -48,7 +48,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
         clientButton.onClick.AddListener(OnClickClient);
         shutdownButton.onClick.AddListener(OnClickShutdown);
 
-        nm.OnClientConnectedCallback += HandleClientConnected;
+        nm.OnClientConnectedCallback += HandLeClientConnected;
         nm.OnClientDisconnectCallback += HandleClientDisconnected;
 
         if (lobbyPanel) lobbyPanel.SetActive(true);
@@ -64,19 +64,20 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
         if (nm != null)
         {
-            nm.OnClientConnectedCallback -= HandleClientConnected;
+            nm.OnClientConnectedCallback -= HandLeClientConnected;
             nm.OnClientDisconnectCallback -= HandleClientDisconnected;
         }
     }
 
     private void OnClickHost()
     {
-        if (!TryGetAddressAndPort(out string_, out ushort port)) return;
+        if (!TryGetAddressAndPort(out string _, out ushort port)) return;
 
         //el host escucha en todas las interfaces
         transport.SetConnectionData("0.0.0.0", port, "0.0.0.0");
 
-        if (nm.StartHost(){
+        if (nm.StartHost())
+        {
             if (statusText) statusText.text = $"host escuchando en puerto {port}. esperando jugadores...";
             SetLobbyInteractable(false);
             shutdownButton.gameObject.SetActive(true);
