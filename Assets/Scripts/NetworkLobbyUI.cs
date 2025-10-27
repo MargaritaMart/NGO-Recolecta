@@ -3,53 +3,55 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using UnityEngine.AI;
+using System.Net;
+using Unity.VisualScripting;
 using TMPro;
 
-public class NewMonoBehaviourScript : MonoBehaviour
+public class NetworkLobbyUI : MonoBehaviour
 {
     [Header("UI")]
-    [SerializeField] private GameObject lobbyPanel;   // Panel del lobby
-    [SerializeField] private TMP_InputField ipInput;        
-    [SerializeField] private TMP_InputField portInput;
-    [SerializeField] private Button hostButton;
-    [SerializeField] private Button clientButton;
-    [SerializeField] private Button shutdownButton;
-    [SerializeField] private TMP_Text statusText;
+    [SerializeField] private GameObject lobbyPanel; // Panel for lobby UI
+    [SerializeField] private TMP_InputField ipInput; // "127.0.0.1" o IP LAN del host
+    [SerializeField] private TMP_InputField portInput; // "7777" puerto del host
+    [SerializeField] private Button hostButton; // Botón para iniciar como host
+    [SerializeField] private Button clientButton; // Botón para iniciar como cliente
+    [SerializeField] private Button shutdownButton; // Botón para detener la conexión
+    [SerializeField] TMP_Text statusText; // Texto para mostrar el estado de la conexión
 
     [Header("Juego")]
-    [SerializeField] private string gameSceneName = "GameScene";
-    [SerializeField] private int minPlayersToStart = 2; // Host + 1 cliente
-
+    [SerializeField] private string gameSceneName = "GameScene"; // Nombre de la escena del juego
+    [SerializeField] private int minPlayersToStart = 2; // Número mínimo de jugadores para iniciar el juego
 
     private NetworkManager nm;
     private UnityTransport transport;
-
 
     private void Awake()
     {
         nm = NetworkManager.Singleton;
         if (!nm)
         {
-            Debug.LogError("Falta networkManager en la escena.");
+            Debug.LogError("falta NetworkManager en la escena.");
             enabled = false;
             return;
         }
+
         transport = nm.GetComponent<UnityTransport>();
         if (!transport)
         {
-            Debug.LogError("Falta UnityTransport en el NetworkManager.");
+            Debug.LogError("falta UnityTransport en el NetworkManager.");
             enabled = false;
             return;
         }
     }
 
-    private void Onable()
+    private void OnEnable()
     {
         hostButton.onClick.AddListener(OnClickHost);
         clientButton.onClick.AddListener(OnClickClient);
         shutdownButton.onClick.AddListener(OnClickShutdown);
 
-        nm.OnClientConnectedCallback += HandLeClientConnected;
+        nm.OnClientConnectedCallback += HandleClientConnected;
         nm.OnClientDisconnectCallback += HandleClientDisconnected;
 
         if (lobbyPanel) lobbyPanel.SetActive(true);
@@ -65,7 +67,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
         if (nm != null)
         {
-            nm.OnClientConnectedCallback -= HandLeClientConnected;
+            nm.OnClientConnectedCallback -= HandleClientConnected;
             nm.OnClientDisconnectCallback -= HandleClientDisconnected;
         }
     }
@@ -74,20 +76,19 @@ public class NewMonoBehaviourScript : MonoBehaviour
     {
         if (!TryGetAddressAndPort(out string _, out ushort port)) return;
 
-        //el host escucha en todas las interfaces
+        // Elhost escucha en todas las interfaces
         transport.SetConnectionData("0.0.0.0", port, "0.0.0.0");
 
         if (nm.StartHost())
         {
-            if (statusText) statusText.text = $"host escuchando en puerto {port}. esperando jugadores...";
-            SetLobbyInteractable(false);
+            if (statusText) statusText.text = $"Host escuchando en el puerto {port}. Esperando jugadores...";
+            SetLobbInteractable(false);
             shutdownButton.gameObject.SetActive(true);
         }
         else
         {
             if (statusText) statusText.text = "Error al iniciar el host.";
         }
-
     }
 
     private void OnClickClient()
@@ -98,8 +99,8 @@ public class NewMonoBehaviourScript : MonoBehaviour
 
         if (nm.StartClient())
         {
-            if (statusText) statusText.text = $"CLIENTT conectando a {address}:{port}_";
-            SetLobbyInteractable(false);
+            if (statusText) statusText.text = $"Conectando al servidor en {address}:{port}...";
+            SetLobbInteractable(false);
             shutdownButton.gameObject.SetActive(true);
         }
         else
@@ -112,7 +113,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     {
         nm.Shutdown();
         if (statusText) statusText.text = "Conexión finalizada.";
-        SetLobbyInteractable(true);
+        SetLobbInteractable(true);
         shutdownButton.gameObject.SetActive(false);
     }
 
@@ -127,26 +128,24 @@ public class NewMonoBehaviourScript : MonoBehaviour
             return false;
         }
         return true;
-
     }
 
-    private void HandLeClientConnected(ulong clientId)
+    private void HandleClientConnected(ulong clientId)
     {
         if (nm.IsServer)
         {
-            int count = nm.ConnectedClientsIds.Count;
-
-            if (statusText) statusText.text = $"Cliente {clientId} conectado. Jugadores: {count}/{minPlayersToStart}";
+            int count = nm.ConnectedClients.Count;
+            if (statusText) statusText.text = $"Cliente {clientId} conectado. Jugadores: {count}/{minPlayersToStart}.";
 
             if (count >= minPlayersToStart)
             {
                 nm.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
                 if (lobbyPanel) lobbyPanel.SetActive(false);
             }
-            else
-            {
-                if (statusText) statusText.text = $"Conectado. ClientID local: {nm.LocalClientId}";
-            }
+        }
+        else
+        {
+            if (statusText) statusText.text = $"Conectando. Cliente ID: {nm.LocalClientId}.";
         }
     }
 
@@ -155,12 +154,13 @@ public class NewMonoBehaviourScript : MonoBehaviour
         if (statusText) statusText.text = $"Cliente {clientId} desconectado.";
     }
 
-    private void SetLobbyInteractable(bool interactable)
+    private void SetLobbInteractable(bool enabled)
     {
-        if (ipInput) ipInput.interactable = enabled;
-        if (portInput) portInput.interactable = enabled;
         if (hostButton) hostButton.interactable = enabled;
         if (clientButton) clientButton.interactable = enabled;
+        if (ipInput) ipInput.interactable = enabled;
+        if (portInput) portInput.interactable = enabled;
     }
-    
+
 }
+
