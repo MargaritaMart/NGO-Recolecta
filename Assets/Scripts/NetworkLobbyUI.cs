@@ -3,17 +3,18 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using TMPro;
 
 public class NewMonoBehaviourScript : MonoBehaviour
 {
     [Header("UI")]
     [SerializeField] private GameObject lobbyPanel;   // Panel del lobby
-    [SerializeField] private InputField ipInput;        
-    [SerializeField] private InputField portInput;
+    [SerializeField] private TMP_InputField ipInput;        
+    [SerializeField] private TMP_InputField portInput;
     [SerializeField] private Button hostButton;
     [SerializeField] private Button clientButton;
     [SerializeField] private Button shutdownButton;
-    [SerializeField] private Text statusText;
+    [SerializeField] private TMP_Text statusText;
 
     [Header("Juego")]
     [SerializeField] private string gameSceneName = "GameScene";
