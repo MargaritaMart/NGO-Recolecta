@@ -1,2 +1,0 @@
-F:\Princesa\Repos\NGO-Recolecta\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
-F:\Princesa\Repos\NGO-Recolecta\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt
